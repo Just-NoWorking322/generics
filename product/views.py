@@ -4,19 +4,57 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.core.cache import cache #####
 
+from rest_framework import mixins, generics
+
 from .models import Product, Category
 from .serializer import ProductSerializer, CategorySerializer
 
 CACHE_KEY_CATEGORIES = 'categories'
+CACHE_TTL = 60
 
+class CategoryListCreateView(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    generics.GenericAPIView
+):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
 
+    def get_queryset(self):
+        queryset = Category.objects.all()
+        q = self.request.query_params.get('q')
+        if q:
+            queryset = queryset.filter(name__icontains=q)
+        return queryset #### фильтр по параметрам
 
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs) # получение категорий
 
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs) # создание категорий
+    
 
+class CategoryDetailView(
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    generics.GenericAPIView
+):
 
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
 
-
-
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+    
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+    
+    def patch(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+    
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
 
 
 
